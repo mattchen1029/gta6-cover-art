@@ -1,8 +1,8 @@
-// Neon Cover Studio — the program that hands the app in (Node 22, standard library only).
+// Palm Sunset Studio — the program that hands the app in (Node 22, standard library only).
 // It copies app/ and screenshots/ from beside this file to /output and writes
 // /output/dossier.json, the summary the judge reads, with the vendored make.fun library.
 // The app itself is plain static files a desktop browser loads offline: app/index.html
-// and its ES modules, two OFL fonts under app/fonts/, four sample photos under
+// and its ES modules, two OFL fonts under app/fonts/, six sample photos under
 // app/samples/, no library and no network request at run time.
 //
 // Serve it locally with `node serve.ts`, then open http://localhost:8080.
