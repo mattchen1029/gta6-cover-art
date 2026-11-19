@@ -1,13 +1,15 @@
-// Neon Cover Studio editor: state, controls, undo, autosave and PNG export.
+// Palm Sunset Studio editor: state, controls, undo, autosave and PNG export.
 // The app runs fully offline: every photo is read on this machine, every font and
 // sample ships under app/, and nothing is uploaded anywhere.
-import { drawCover, layoutPanels, LAYOUTS, GRADES, CAPTION_STYLES } from './cover.js';
+import { drawCover, panelRects, LAYOUTS, GRADES, TITLE_STYLES } from './cover.js';
 import { runShot } from './shots.js';
 
 /** Free-to-use sample photos shipped with the app (image-model made). */
 export const SAMPLES = [
   { id: 'neon', label: 'Neon Street', src: 'samples/neon.jpg' },
   { id: 'beach', label: 'Beach Sunset', src: 'samples/beach.jpg' },
+  { id: 'car', label: 'Classic Car', src: 'samples/car.jpg' },
+  { id: 'palms', label: 'Palm Boulevard', src: 'samples/palms.jpg' },
   { id: 'boulevard', label: 'Boulevard', src: 'samples/boulevard.jpg' },
   { id: 'pier', label: 'Pier', src: 'samples/pier.jpg' },
 ];
@@ -19,22 +21,40 @@ export const EXPORT_SIZES = {
   '1920x1080': { w: 1920, h: 1080, label: '1920 × 1080 wide' },
 };
 
-const STORE_KEY = 'neon-cover-studio-v1';
+const STORE_KEY = 'palm-sunset-studio-v2';
 const canvas = document.getElementById('cover');
 const ctx = canvas.getContext('2d');
 const statusEl = document.getElementById('status');
 
-/** The default project: a three-panel sunset cover. */
+/** The default project: a seven-panel collage in Vice Heat. */
 export function defaultState() {
   return {
-    layout: 'trio',
-    grade: 'sunset',
-    size: '1080x1080',
-    caption: { text: 'VICE NIGHTS', size: 0.11, place: 'bottom', color: '#ffffff', style: 'sunset', outline: true, shadow: true },
+    layout: 'collage',
+    grade: 'vice',
+    size: '1920x1080',
+    lettering: {
+      title: 'PALM SUNSET',
+      subtitle: 'A LEONIDA STORY',
+      tagline: 'Two outlaws. One city. No way back.',
+      stamp: true,
+      stampText: 'VICE CITY • 2026',
+      size: 0.13,
+      place: 'bottom',
+      color: '#ffffff',
+      style: 'poster',
+      outline: true,
+      shadow: true,
+      tracking: 0.06,
+    },
+    art: { sun: true, palms: true, skyline: true, frame: true, grain: true, halftone: false, ink: false },
     panels: [
-      { photo: 'neon', zoom: 1, ox: 0, oy: 0 },
+      { photo: 'neon', zoom: 1.15, ox: 0, oy: 0 },
       { photo: 'beach', zoom: 1, ox: 0, oy: 0 },
+      { photo: 'car', zoom: 1, ox: 0, oy: 0 },
+      { photo: 'palms', zoom: 1.1, ox: 0, oy: 0 },
+      { photo: 'boulevard', zoom: 1, ox: 0, oy: 0 },
       { photo: 'pier', zoom: 1, ox: 0, oy: 0 },
+      { photo: 'beach', zoom: 1.25, ox: 0.05, oy: 0 },
     ],
     selected: 0,
   };
@@ -46,6 +66,11 @@ let uploads = {}; // panel index -> object URL of a photo the user picked from d
 let history = [];
 let historyIndex = -1;
 
+function clampNumber(value, min, max, fallback) {
+  const n = Number(value);
+  return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
+}
+
 function loadSavedState() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
@@ -55,9 +80,10 @@ function loadSavedState() {
     if (saved.layout && LAYOUTS[saved.layout]) fresh.layout = saved.layout;
     if (saved.grade && GRADES[saved.grade]) fresh.grade = saved.grade;
     if (saved.size && EXPORT_SIZES[saved.size]) fresh.size = saved.size;
-    if (saved.caption) fresh.caption = { ...fresh.caption, ...saved.caption };
+    if (saved.lettering) fresh.lettering = { ...fresh.lettering, ...saved.lettering };
+    if (saved.art) fresh.art = { ...fresh.art, ...saved.art };
     if (Array.isArray(saved.panels)) {
-      fresh.panels = saved.panels.slice(0, 4).map((p, i) => ({
+      fresh.panels = saved.panels.slice(0, 7).map((p, i) => ({
         photo: typeof p.photo === 'string' ? p.photo : (fresh.panels[i] || {}).photo,
         zoom: clampNumber(p.zoom, 1, 3, 1),
         ox: clampNumber(p.ox, -0.5, 0.5, 0),
@@ -68,11 +94,6 @@ function loadSavedState() {
   } catch {
     return defaultState();
   }
-}
-
-function clampNumber(value, min, max, fallback) {
-  const n = Number(value);
-  return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
 }
 
 /** Keeps the panel list the size the current layout needs, reusing photos by slot. */
@@ -88,7 +109,7 @@ export function fitPanelsToLayout(next) {
   return next;
 }
 
-/** Loads an image from a URL, resolving to the image once it can be drawn. */
+/** Loads an image from a URL, resolving once it can be drawn. */
 export function loadImage(url) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -200,38 +221,48 @@ export async function exportCover() {
   const blob = await new Promise((resolve) => off.toBlob(resolve, 'image/png'));
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `vice-cover-${size.w}x${size.h}.png`;
+  a.download = `palm-sunset-cover-${size.w}x${size.h}.png`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-  statusEl.textContent = `Saved vice-cover-${size.w}x${size.h}.png`;
+  statusEl.textContent = `Saved palm-sunset-cover-${size.w}x${size.h}.png`;
   return blob;
 }
 
 /** Reflects the state in every control. */
 export function syncControls() {
-  document.querySelectorAll('[data-layout]').forEach((b) => b.classList.toggle('active', b.dataset.layout === state.layout));
-  document.querySelectorAll('[data-grade]').forEach((b) => b.classList.toggle('active', b.dataset.grade === state.grade));
-  document.querySelectorAll('[data-size]').forEach((b) => b.classList.toggle('active', b.dataset.size === state.size));
-  document.querySelectorAll('[data-place]').forEach((b) => b.classList.toggle('active', b.dataset.place === state.caption.place));
-  document.querySelectorAll('[data-color]').forEach((b) => b.classList.toggle('active', b.dataset.color === state.caption.color));
-  const captionText = document.getElementById('captionText');
-  if (captionText && captionText.value !== state.caption.text) captionText.value = state.caption.text;
-  const styleSel = document.getElementById('captionStyle');
-  if (styleSel) styleSel.value = state.caption.style;
-  const sizeRange = document.getElementById('captionSize');
-  if (sizeRange) sizeRange.value = String(Math.round(state.caption.size * 100));
-  const outlineBox = document.getElementById('captionOutline');
-  if (outlineBox) outlineBox.checked = state.caption.outline !== false;
-  const shadowBox = document.getElementById('captionShadow');
-  if (shadowBox) shadowBox.checked = state.caption.shadow !== false;
+  const mark = (attr, value) => {
+    document.querySelectorAll(`[${attr}]`).forEach((b) => b.classList.toggle('active', b.dataset[attr.slice(5)] === value));
+  };
+  mark('data-layout', state.layout);
+  mark('data-grade', state.grade);
+  mark('data-size', state.size);
+  mark('data-place', state.lettering.place);
+  mark('data-color', state.lettering.color);
+  const setVal = (id, value) => {
+    const el = document.getElementById(id);
+    if (el && el.value !== String(value)) el.value = String(value);
+  };
+  setVal('titleText', state.lettering.title);
+  setVal('subtitleText', state.lettering.subtitle);
+  setVal('taglineText', state.lettering.tagline);
+  setVal('stampText', state.lettering.stampText);
+  const styleSel = document.getElementById('titleStyle');
+  if (styleSel) styleSel.value = state.lettering.style;
+  setVal('titleSize', Math.round(state.lettering.size * 100));
+  setVal('trackingRange', Math.round(state.lettering.tracking * 100));
+  const check = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.checked = value !== false;
+  };
+  check('titleOutline', state.lettering.outline);
+  check('titleShadow', state.lettering.shadow);
+  check('stampToggle', state.lettering.stamp);
+  Object.keys(state.art).forEach((key) => check(`art-${key}`, state.art[key]));
   const photoPick = document.getElementById('photoPick');
   if (photoPick) photoPick.value = state.panels[state.selected]?.photo ?? 'neon';
-  const zoomRange = document.getElementById('zoomRange');
-  if (zoomRange) zoomRange.value = String(state.panels[state.selected]?.zoom ?? 1);
-  const panX = document.getElementById('panXRange');
-  if (panX) panX.value = String(state.panels[state.selected]?.ox ?? 0);
-  const panY = document.getElementById('panYRange');
-  if (panY) panY.value = String(state.panels[state.selected]?.oy ?? 0);
+  setVal('zoomRange', state.panels[state.selected]?.zoom ?? 1);
+  setVal('panXRange', state.panels[state.selected]?.ox ?? 0);
+  setVal('panYRange', state.panels[state.selected]?.oy ?? 0);
   const chips = document.getElementById('panelChips');
   if (chips) {
     chips.innerHTML = '';
@@ -247,50 +278,54 @@ export function syncControls() {
 }
 
 function wireControls() {
-  document.querySelectorAll('[data-layout]').forEach((b) => b.addEventListener('click', () => {
-    state.layout = b.dataset.layout;
-    commitChange();
-  }));
-  document.querySelectorAll('[data-grade]').forEach((b) => b.addEventListener('click', () => {
-    state.grade = b.dataset.grade;
-    commitChange();
-  }));
-  document.querySelectorAll('[data-size]').forEach((b) => b.addEventListener('click', () => {
-    state.size = b.dataset.size;
-    commitChange();
-  }));
-  document.querySelectorAll('[data-place]').forEach((b) => b.addEventListener('click', () => {
-    state.caption.place = b.dataset.place;
-    commitChange();
-  }));
-  document.querySelectorAll('[data-color]').forEach((b) => b.addEventListener('click', () => {
-    state.caption.color = b.dataset.color;
-    commitChange();
-  }));
-  document.getElementById('captionText').addEventListener('input', (e) => {
-    state.caption.text = e.target.value;
-    saveProject();
-    redrawPreview();
-  });
-  document.getElementById('captionText').addEventListener('change', () => pushHistory());
-  document.getElementById('captionStyle').addEventListener('change', (e) => {
-    state.caption.style = e.target.value;
+  const onGroup = (attr, apply) => {
+    document.querySelectorAll(`[${attr}]`).forEach((b) => b.addEventListener('click', () => {
+      apply(b.dataset[attr.slice(5)]);
+      commitChange();
+    }));
+  };
+  onGroup('data-layout', (v) => { state.layout = v; });
+  onGroup('data-grade', (v) => { state.grade = v; });
+  onGroup('data-size', (v) => { state.size = v; });
+  onGroup('data-place', (v) => { state.lettering.place = v; });
+  onGroup('data-color', (v) => { state.lettering.color = v; });
+
+  const bindText = (id, apply, live = true) => {
+    const el = document.getElementById(id);
+    el.addEventListener('input', () => { apply(el.value); if (live) { saveProject(); redrawPreview(); } });
+    el.addEventListener('change', () => pushHistory());
+  };
+  bindText('titleText', (v) => { state.lettering.title = v; });
+  bindText('subtitleText', (v) => { state.lettering.subtitle = v; });
+  bindText('taglineText', (v) => { state.lettering.tagline = v; });
+  bindText('stampText', (v) => { state.lettering.stampText = v; });
+
+  document.getElementById('titleStyle').addEventListener('change', (e) => {
+    state.lettering.style = e.target.value;
     commitChange();
   });
-  document.getElementById('captionSize').addEventListener('input', (e) => {
-    state.caption.size = Number(e.target.value) / 100;
-    saveProject();
-    redrawPreview();
-  });
-  document.getElementById('captionSize').addEventListener('change', () => pushHistory());
-  document.getElementById('captionOutline').addEventListener('change', (e) => {
-    state.caption.outline = e.target.checked;
-    commitChange();
-  });
-  document.getElementById('captionShadow').addEventListener('change', (e) => {
-    state.caption.shadow = e.target.checked;
-    commitChange();
-  });
+  const bindSlider = (id, apply) => {
+    const el = document.getElementById(id);
+    el.addEventListener('input', () => { apply(Number(el.value)); saveProject(); redrawPreview(); });
+    el.addEventListener('change', () => pushHistory());
+  };
+  bindSlider('titleSize', (v) => { state.lettering.size = v / 100; });
+  bindSlider('trackingRange', (v) => { state.lettering.tracking = v / 100; });
+  bindSlider('zoomRange', (v) => { state.panels[state.selected].zoom = v; });
+  bindSlider('panXRange', (v) => { state.panels[state.selected].ox = v; });
+  bindSlider('panYRange', (v) => { state.panels[state.selected].oy = v; });
+
+  const bindCheck = (id, apply) => {
+    document.getElementById(id).addEventListener('change', (e) => {
+      apply(e.target.checked);
+      commitChange();
+    });
+  };
+  bindCheck('titleOutline', (v) => { state.lettering.outline = v; });
+  bindCheck('titleShadow', (v) => { state.lettering.shadow = v; });
+  bindCheck('stampToggle', (v) => { state.lettering.stamp = v; });
+  Object.keys(state.art).forEach((key) => bindCheck(`art-${key}`, (v) => { state.art[key] = v; }));
+
   document.getElementById('photoPick').addEventListener('change', (e) => {
     if (e.target.value === 'upload') {
       document.getElementById('photoFile').click();
@@ -310,14 +345,6 @@ function wireControls() {
     state.panels[state.selected].oy = 0;
     commitChange();
   });
-  const bindSlider = (id, apply) => {
-    const el = document.getElementById(id);
-    el.addEventListener('input', () => { apply(Number(el.value)); saveProject(); redrawPreview(); });
-    el.addEventListener('change', () => pushHistory());
-  };
-  bindSlider('zoomRange', (v) => { state.panels[state.selected].zoom = v; });
-  bindSlider('panXRange', (v) => { state.panels[state.selected].ox = v; });
-  bindSlider('panYRange', (v) => { state.panels[state.selected].oy = v; });
   document.getElementById('fillEverywhere').addEventListener('click', () => {
     const source = { ...state.panels[state.selected] };
     state.panels = state.panels.map(() => ({ ...source }));
@@ -350,13 +377,13 @@ export function wireCanvasPointer() {
     const r = canvas.getBoundingClientRect();
     const x = (clientX - r.left) * (canvas.width / r.width);
     const y = (clientY - r.top) * (canvas.height / r.height);
-    const rects = layoutPanels(state.layout, canvas.width, canvas.height);
-    return { index: rects.findIndex((rect) => x >= rect.x && x < rect.x + rect.w && y >= rect.y && y < rect.y + rect.h), rects, x, y };
+    const rects = panelRects(state.layout, canvas.width, canvas.height);
+    return rects.findIndex((rect) => x >= rect.x && x < rect.x + rect.w && y >= rect.y && y < rect.y + rect.h);
   };
   canvas.addEventListener('pointerdown', (e) => {
-    const hit = panelAt(e.clientX, e.clientY);
-    if (hit.index < 0) return;
-    state.selected = hit.index;
+    const index = panelAt(e.clientX, e.clientY);
+    if (index < 0) return;
+    state.selected = index;
     syncControls();
     redrawPreview();
     dragging = true;
@@ -415,7 +442,8 @@ if (shot) {
       if (scene.layout) state.layout = scene.layout;
       if (scene.grade) state.grade = scene.grade;
       if (scene.size) state.size = scene.size;
-      if (scene.caption) state.caption = { ...state.caption, ...scene.caption };
+      if (scene.lettering) state.lettering = { ...state.lettering, ...scene.lettering };
+      if (scene.art) state.art = { ...state.art, ...scene.art };
       if (scene.photos) {
         fitPanelsToLayout(state);
         scene.photos.forEach((id, i) => {
@@ -423,6 +451,7 @@ if (shot) {
         });
       }
       await loadPhotos();
+      syncControls();
     },
     canvas,
     drawAt: (w, h) => {
