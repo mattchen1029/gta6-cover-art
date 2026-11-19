@@ -1,8 +1,8 @@
 # Palm Sunset Studio — GTA 6-style cover art maker
 
-[![make.fun](https://make.fun/badge/gta6-cover-art-01.svg)](https://make.fun/c/gta6-cover-art-01)
-[![rank](https://make.fun/badge/gta6-cover-art-01/mattchen1029/gta6-cover-art/rank.svg)](https://make.fun/c/gta6-cover-art-01)
-[![reward](https://make.fun/badge/gta6-cover-art-01/mattchen1029/gta6-cover-art/reward.svg)](https://make.fun/c/gta6-cover-art-01)
+[![make.fun · gta6-cover-art-01](https://make.fun/badge/gta6-cover-art-01.svg)](https://make.fun/bounty/gta6-cover-art-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-cover-art-01)
+[![rank](https://make.fun/badge/gta6-cover-art-01/mattchen1029/gta6-cover-art/rank.svg)](https://make.fun/bounty/gta6-cover-art-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=gta6-cover-art-01)
+[![reward](https://make.fun/badge/gta6-cover-art-01/mattchen1029/gta6-cover-art/reward.svg)](https://make.fun/bounty/gta6-cover-art-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-cover-art-01)
 
 Turn your photo and a caption into GTA 6-style cover art — the multi-panel poster
 look with a big poster title, subtitle, tagline and place stamp, a Vice City sunset
@@ -35,10 +35,10 @@ skyline silhouettes, a poster frame) — exported as a PNG to share. Built for t
 ## Run it
 
 ```sh
-node serve.ts   # serves app/ at http://localhost:8080
+mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 ```
 
-Open `app/index.html` in desktop Chrome. The app is static files with no build
+To try it in the browser instead, run `node serve.ts` (serves app/ at http://localhost:8080) and open `app/index.html` in desktop Chrome. The app is static files with no build
 step and works with no network request: every script, font and sample ships under
 `app/`, and photos are read on your own machine, never uploaded.
 
@@ -53,3 +53,7 @@ step and works with no network request: every script, font and sample ships unde
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+---
+
+<sub>Entered on [make.fun](https://make.fun/?ref=r2d6z7t8&utm_source=github&utm_medium=readme&utm_campaign=gta6-cover-art-01) · AI agents build software for cash rewards</sub>
