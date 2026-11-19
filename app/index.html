@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Neon Cover Studio — GTA 6-style cover art maker</title>
+<title>Palm Sunset Studio — GTA 6-style cover art maker</title>
 <link rel="stylesheet" href="./style.css">
 </head>
 <body>
 <main class="app">
   <aside class="controls" id="controls">
     <header>
-      <h1>Neon Cover Studio</h1>
+      <h1>Palm Sunset Studio</h1>
       <p class="tagline">Turn your photo into GTA 6-style cover art — offline, in your browser. Your photos never leave this machine.</p>
     </header>
 
@@ -22,6 +22,10 @@
         <button type="button" data-layout="trio">Three panels</button>
         <button type="button" data-layout="grid">Grid of four</button>
         <button type="button" data-layout="hero">Hero + strip</button>
+        <button type="button" data-layout="collage">Key-art collage</button>
+        <button type="button" data-layout="stack">Stacked strips</button>
+        <button type="button" data-layout="mosaic">Six-panel mosaic</button>
+        <button type="button" data-layout="banner">Banner + panel</button>
       </div>
     </section>
 
@@ -42,11 +46,18 @@
       <p class="hint">Tip: click a panel on the cover to select it, drag it to move the photo, scroll to zoom.</p>
     </section>
 
-    <section aria-label="Caption">
-      <h2>3 · Caption</h2>
-      <label>Caption <input id="captionText" type="text" maxlength="48" value="VICE NIGHTS"></label>
-      <label>Caption style
-        <select id="captionStyle">
+    <section aria-label="Lettering">
+      <h2>3 · Lettering</h2>
+      <label>Title <input id="titleText" type="text" maxlength="48" value="PALM SUNSET"></label>
+      <label>Subtitle <input id="subtitleText" type="text" maxlength="48" value="A LEONIDA STORY"></label>
+      <label>Tagline <input id="taglineText" type="text" maxlength="90" value="Two outlaws. One city. No way back."></label>
+      <div class="check-row">
+        <label><input id="stampToggle" type="checkbox" checked> Place stamp</label>
+      </div>
+      <label>Stamp text <input id="stampText" type="text" maxlength="32" value="VICE CITY • 2026"></label>
+      <label>Title style
+        <select id="titleStyle">
+          <option value="poster">Poster — gradient + tilt</option>
           <option value="sunset">Sunset Bold</option>
           <option value="neon">Neon Glow</option>
           <option value="noir">Noir</option>
@@ -54,13 +65,14 @@
           <option value="bubblegum">Bubblegum</option>
         </select>
       </label>
-      <label>Caption size <input id="captionSize" type="range" min="6" max="18" step="1" value="11"></label>
-      <div class="button-row" role="group" aria-label="Caption placement">
+      <label>Title size <input id="titleSize" type="range" min="6" max="20" step="1" value="13"></label>
+      <label>Letter spacing <input id="trackingRange" type="range" min="0" max="20" step="1" value="6"></label>
+      <div class="button-row" role="group" aria-label="Lettering placement">
         <button type="button" data-place="top">Top</button>
         <button type="button" data-place="center">Centre</button>
         <button type="button" data-place="bottom">Bottom</button>
       </div>
-      <div class="button-row" role="group" aria-label="Caption colour">
+      <div class="button-row" role="group" aria-label="Title colour">
         <button type="button" data-color="#ffffff" class="swatch" style="--sw:#ffffff" aria-label="White">White</button>
         <button type="button" data-color="#ffd23e" class="swatch" style="--sw:#ffd23e" aria-label="Gold">Gold</button>
         <button type="button" data-color="#ff7ad9" class="swatch" style="--sw:#ff7ad9" aria-label="Pink">Pink</button>
@@ -68,16 +80,32 @@
         <button type="button" data-color="#111111" class="swatch" style="--sw:#111111" aria-label="Black">Black</button>
       </div>
       <div class="check-row">
-        <label><input id="captionOutline" type="checkbox" checked> Outline</label>
-        <label><input id="captionShadow" type="checkbox" checked> Shadow / glow</label>
+        <label><input id="titleOutline" type="checkbox" checked> Outline</label>
+        <label><input id="titleShadow" type="checkbox" checked> Shadow / glow</label>
       </div>
     </section>
 
+    <section aria-label="Poster art">
+      <h2>4 · Poster art</h2>
+      <div class="check-row art-grid">
+        <label><input id="art-sun" type="checkbox" checked> Setting sun</label>
+        <label><input id="art-palms" type="checkbox" checked> Palm silhouettes</label>
+        <label><input id="art-skyline" type="checkbox" checked> Skyline</label>
+        <label><input id="art-frame" type="checkbox" checked> Poster frame</label>
+        <label><input id="art-grain" type="checkbox" checked> Film grain</label>
+        <label><input id="art-halftone" type="checkbox"> Halftone dots</label>
+        <label><input id="art-ink" type="checkbox"> Ink posterize</label>
+      </div>
+      <p class="hint">Drawn by the app itself — no borrowed artwork. The sun, palms and skyline are procedural silhouettes.</p>
+    </section>
+
     <section aria-label="Colour grade">
-      <h2>4 · Colour grade</h2>
+      <h2>5 · Colour grade</h2>
       <div class="button-row">
         <button type="button" data-grade="sunset">Sunset</button>
+        <button type="button" data-grade="vice">Vice Heat</button>
         <button type="button" data-grade="neon">Neon</button>
+        <button type="button" data-grade="miami">Miami Nights</button>
         <button type="button" data-grade="dusk">Dusk</button>
         <button type="button" data-grade="noir">Noir</button>
         <button type="button" data-grade="pastel">Pastel</button>
@@ -85,7 +113,7 @@
     </section>
 
     <section aria-label="Export">
-      <h2>5 · Export</h2>
+      <h2>6 · Export</h2>
       <div class="button-row" role="group" aria-label="Export size">
         <button type="button" data-size="1080x1080">1080 × 1080</button>
         <button type="button" data-size="1080x1350">1080 × 1350</button>
@@ -102,7 +130,7 @@
 
     <details id="help">
       <summary>How it works</summary>
-      <p>1. Pick a layout, then a photo for each panel — use the shipped samples or upload your own. 2. Drag a panel's photo to move it, scroll to zoom, or use the sliders. 3. Write your caption, pick a style, colour and grade. 4. Choose a post size and hit Export PNG. Your project is saved in this browser automatically, so a reload keeps your work.</p>
+      <p>1. Pick one of nine layouts, then a photo for each panel — use the six shipped samples or upload your own. 2. Drag a panel's photo to move it, scroll to zoom, or use the sliders. 3. Write the title, subtitle, tagline and place stamp, pick a lettering style and a colour grade, and switch the poster art (sun, palms, skyline, frame, grain) on or off. 4. Choose a post size and hit Export PNG. Your project is saved in this browser automatically, so a reload keeps your work.</p>
     </details>
   </aside>
 
